@@ -14,6 +14,7 @@ import static com.example.springboot.entity.Playlist.PlayMode.SHUFFLE;
  */
 @Entity
 @Data
+@Table(name = "playlist")
 public class Playlist {
     @Column(name = "playlist_id")
     @Id
@@ -22,7 +23,7 @@ public class Playlist {
     private String name;
     @Column(name = "current_index")
     private Integer currentIndex;
-    @OneToMany
+    @OneToMany(fetch = FetchType.EAGER)
     private List<Song> songs = new ArrayList<>();
     @Column(name = "play_mode")
     private PlayMode playMode;
@@ -39,7 +40,11 @@ public class Playlist {
     @Override
     public String toString(){
         String mode = playMode == ORDER?"顺序播放":"随机播放";
-        return name+ " | "+mode;
+        String songsName = "";
+        for(int i = 0;i<getSongs().size();i++){
+            songsName+=(getSongs().get(i)+"\n");
+        }
+        return name+ " | "+mode+"\n"+"歌单列表:\n"+songsName;
     }
     public void switchPlayMode(){
         if(playMode == ORDER){

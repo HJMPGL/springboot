@@ -13,6 +13,7 @@ import java.util.Map;
  */
 @Entity
 @Data
+@Table(name = "user")
 public class User {
     @Column(name = "user_id")
     @Id
@@ -21,13 +22,20 @@ public class User {
     private String name;
     @OneToMany(fetch = FetchType.EAGER)
     private List<Playlist>playlists = new ArrayList<>();
-    @OneToMany(fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "user_share_urls",
+            joinColumns = @JoinColumn(name = "user_user_id"),
+            inverseJoinColumns = @JoinColumn(name = "share_urls_playlist_id")
+    )
+    @MapKeyColumn(name = "share_urls_key")
     private Map<String,Playlist> shareUrls = new HashMap<>();
 
     @Override
     public String toString(){
         return "用户："+name;
     }
+//    @Transactional
     public void sharePlaylist(String url,Playlist playlist){
         shareUrls.put(url,playlist);
     }

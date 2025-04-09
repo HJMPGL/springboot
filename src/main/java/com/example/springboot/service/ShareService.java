@@ -7,7 +7,6 @@ import com.example.springboot.repository.UserRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -22,9 +21,8 @@ public class ShareService {
     @Autowired
     private PlaylistRepository playlistRepository;
 
-    @Transactional//自动管理事务
+//    @Transactional//自动管理事务
     public String sharePlaylist(User user, Playlist playlist){
-        user.getShareUrls().size();
         /**
          * 生成唯一url
          */
@@ -36,10 +34,12 @@ public class ShareService {
         /**
          * 更新（插入）数据库
          */
-        userRepository.save(user);
+//        userRepository.save(user);
+        userRepository.saveAndFlush(user);
+
         return url;
     }
-    @Transactional//自动管理事务
+//    @Transactional//自动管理事务
     public Playlist getPlaylistByUrl(String url){
         return userRepository.findBySharedUrl(url);
     }

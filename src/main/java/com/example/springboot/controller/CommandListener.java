@@ -24,11 +24,8 @@ public class CommandListener implements ApplicationRunner {
         listenerThread = new Thread(()->{
             while (true){
                 Scanner scanner = new Scanner(System.in);
-                String s = scanner.nextLine().trim().toUpperCase();
-                System.out.println(s);
-                if(s.equals("EXIT")||s.equals("NEXT")||s.equals("MODE")||s.equals("SHARE")) {
-                    playBackController.handleCommand(s);
-                }
+                String s = scanner.nextLine().trim();
+                playBackController.handleCommand(s);
             }
         });
         listenerThread.start();

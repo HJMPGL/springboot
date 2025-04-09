@@ -3,6 +3,7 @@ package com.example.springboot.controller;
 import com.example.springboot.entity.Playlist;
 import com.example.springboot.entity.Song;
 import com.example.springboot.entity.User;
+import com.example.springboot.repository.PlaylistRepository;
 import com.example.springboot.repository.UserRepository;
 import com.example.springboot.service.ShareService;
 import com.example.springboot.service.strategy.OrderedStrategy;
@@ -20,10 +21,10 @@ import org.springframework.stereotype.Controller;
 public class PlayBackController {
     private PlayStrategy currentStrategy;
     private Song currentSong;
-    private Playlist playlist;
     private volatile boolean running = false;
     private Thread playBackThread;
-    private User user;
+//    private Playlist playlist;
+//    private User user;
 
     @Autowired
     private LyricsRenderer lyricsRenderer;
@@ -35,7 +36,8 @@ public class PlayBackController {
     private ShareService shareService;
     @Autowired
     private UserRepository userRepository;
-
+    @Autowired
+    private PlaylistRepository playlistRepository;
 
     public void play(Playlist playlist){
         // 终止旧线程（如果存在）
@@ -51,7 +53,7 @@ public class PlayBackController {
          * 初始化
          */
         synchronized (this) {
-            this.playlist = playlist;
+//            this.playlist = playlist;
             running = true;
             if (playlist.getPlayMode() == Playlist.PlayMode.ORDER) {
                 currentStrategy = orderedStrategy;
@@ -82,9 +84,9 @@ public class PlayBackController {
         });
         playBackThread.start();
     }
-    private void switchMode(){
+    private void switchMode(Playlist playlist){
         synchronized (this) {
-            this.playlist.switchPlayMode();
+            playlist.switchPlayMode();
             if (playlist.getPlayMode() == Playlist.PlayMode.ORDER) {
                 currentStrategy = orderedStrategy;
             } else {
@@ -93,9 +95,17 @@ public class PlayBackController {
         }
     }
 
+    private boolean isUUID(String input) {
+        String UUID_REGEX = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
+        return input.matches(UUID_REGEX);
+    }
     public void handleCommand(String command){
+        User user = userRepository.findById("304f65c7-9bf0-4137-a9f3-dd5bdc33edab").orElseThrow(()->new RuntimeException("用户不存在"));
+        String playlistId = userRepository.findPlaylistIdByUserId(user.getId());
+        Playlist playlist = playlistRepository.findByIdWithSongs(playlistId).orElseThrow(()->new RuntimeException("播放列表不存在"));
+
         synchronized (this) {
-            if ("NEXT".equals(command)) {
+            if ("n".equals(command)) {
                 lyricsRenderer.stop();
                 currentSong = currentStrategy.nextSong(playlist);
                 if (currentSong == null) {
@@ -103,18 +113,23 @@ public class PlayBackController {
                     return;
                 }
                 lyricsRenderer.start(currentSong);
-            } else if ("MODE".equals(command)) {
-                switchMode();
-                System.out.println("当前播放模式为："+playlist.getPlayMode());
-            } else if ("EXIT".equals(command)) {
+            } else if ("m".equals(command)) {
+                switchMode(playlist);
+                String mode = playlist.getPlayMode() == Playlist.PlayMode.ORDER?"顺序播放":"随机播放";
+                System.out.println("当前播放模式为："+mode);
+            } else if ("e".equals(command)) {
                 lyricsRenderer.stop();
                 running = false;
                 if (playBackThread != null) {
                     playBackThread.interrupt();
                 }
-            }else if("SHARE".equals(command)) {
-                user = userRepository.findById("304f65c7-9bf0-4137-a9f3-dd5bdc33edab").orElseThrow();
+            } else if("s".equals(command)) {
                 System.out.println(shareService.sharePlaylist(user, playlist));
+            } else if("p".equals(command)){
+                play(playlist);
+            } else if(isUUID(command)){
+                Playlist playlist1 = shareService.getPlaylistByUrl(command);
+                System.out.println(playlist1.toString());
             }
         }
     }

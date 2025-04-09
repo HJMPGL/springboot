@@ -21,8 +21,6 @@ public class SpringbootApplication {
         SpringApplication.run(SpringbootApplication.class, args);
     }
 
-
-
     @Bean
     public ApplicationRunner initialize(
             PlayBackController playBackController,

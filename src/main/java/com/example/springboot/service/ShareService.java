@@ -7,6 +7,7 @@ import com.example.springboot.repository.UserRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -21,7 +22,7 @@ public class ShareService {
     @Autowired
     private PlaylistRepository playlistRepository;
 
-//    @Transactional//自动管理事务
+    @Transactional//自动管理事务
     public String sharePlaylist(User user, Playlist playlist){
         /**
          * 生成唯一url
@@ -39,7 +40,7 @@ public class ShareService {
 
         return url;
     }
-//    @Transactional//自动管理事务
+    @Transactional//自动管理事务
     public Playlist getPlaylistByUrl(String url){
         return userRepository.findBySharedUrl(url);
     }

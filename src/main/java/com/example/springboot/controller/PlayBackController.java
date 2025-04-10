@@ -23,8 +23,8 @@ public class PlayBackController {
     private Song currentSong;
     private volatile boolean running = false;
     private Thread playBackThread;
-//    private Playlist playlist;
-//    private User user;
+    private Playlist playlist;
+    private User user;
 
     @Autowired
     private LyricsRenderer lyricsRenderer;
@@ -95,17 +95,24 @@ public class PlayBackController {
         }
     }
 
+    private void init(){
+        if(user == null){
+            user = userRepository.findById("304f65c7-9bf0-4137-a9f3-dd5bdc33edab").orElseThrow(()->new RuntimeException("用户不存在"));
+        }
+        if(playlist == null){
+            String playlistId = userRepository.findPlaylistIdByUserId(user.getId());
+            playlist = playlistRepository.findByIdWithSongs(playlistId).orElseThrow(()->new RuntimeException("播放列表不存在"));
+        }
+    }
+
     private boolean isUUID(String input) {
         String UUID_REGEX = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
         return input.matches(UUID_REGEX);
     }
     public void handleCommand(String command){
-        User user = userRepository.findById("304f65c7-9bf0-4137-a9f3-dd5bdc33edab").orElseThrow(()->new RuntimeException("用户不存在"));
-        String playlistId = userRepository.findPlaylistIdByUserId(user.getId());
-        Playlist playlist = playlistRepository.findByIdWithSongs(playlistId).orElseThrow(()->new RuntimeException("播放列表不存在"));
-
         synchronized (this) {
             if ("n".equals(command)) {
+                init();
                 lyricsRenderer.stop();
                 currentSong = currentStrategy.nextSong(playlist);
                 if (currentSong == null) {
@@ -114,6 +121,7 @@ public class PlayBackController {
                 }
                 lyricsRenderer.start(currentSong);
             } else if ("m".equals(command)) {
+                init();
                 switchMode(playlist);
                 String mode = playlist.getPlayMode() == Playlist.PlayMode.ORDER?"顺序播放":"随机播放";
                 System.out.println("当前播放模式为："+mode);
@@ -124,12 +132,15 @@ public class PlayBackController {
                     playBackThread.interrupt();
                 }
             } else if("s".equals(command)) {
+                init();
                 System.out.println(shareService.sharePlaylist(user, playlist));
             } else if("p".equals(command)){
+                init();
                 play(playlist);
             } else if(isUUID(command)){
-                Playlist playlist1 = shareService.getPlaylistByUrl(command);
-                System.out.println(playlist1.toString());
+                init();
+                Playlist playlist2 = shareService.getPlaylistByUrl(command);
+                System.out.println(playlist2.toString());
             }
         }
     }

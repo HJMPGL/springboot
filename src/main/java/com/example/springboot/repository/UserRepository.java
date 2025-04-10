@@ -46,6 +46,13 @@ public interface UserRepository extends JpaRepository<User,String> {
     ,nativeQuery = true)
     User getById(@PathVariable("id") String id);
 
+    @Query(value = """
+                select usu.share_urls_key
+                from user_share_urls usu
+                where usu.user_user_id = :id
+            """
+    ,nativeQuery = true)
+    String getUuidByUserId(@PathVariable("id") String id);
 
 }
 

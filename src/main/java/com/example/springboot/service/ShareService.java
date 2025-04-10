@@ -35,8 +35,11 @@ public class ShareService {
         /**
          * 更新（插入）数据库
          */
-//        userRepository.save(user);
-        userRepository.saveAndFlush(user);
+        if(userRepository.getUuidByUserId(user.getId())==null){
+            userRepository.saveAndFlush(user);
+        }else {
+            url = userRepository.getUuidByUserId(user.getId());
+        }
 
         return url;
     }
